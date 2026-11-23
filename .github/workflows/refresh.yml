@@ -1,0 +1,50 @@
+# Refresh the live DefiLlama data every day and deploy the dashboard to GitHub Pages.
+# The dashboard at site/ is a flat copy of out/dashboard/ + out/data.js (the script
+# src in index.html is rewritten from ../data.js to ./data.js for the flat layout).
+name: Refresh & deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * *" # daily, 00:00 UTC = 07:00 WIB
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node fetch.mjs
+      - run: node verify.mjs
+      - name: Assemble site
+        run: |
+          mkdir -p site
+          cp out/dashboard/* site/
+          cp out/data.js site/data.js
+          cp out/board.json site/board.json
+          sed -i 's#\.\./data\.js#./data.js#' site/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: refresh
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
