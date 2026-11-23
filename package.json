@@ -1,0 +1,1 @@
+{"description":"Token Radar Live: pre-token protocols ranked by implied value, refreshed from the live DefiLlama index.","license":"MIT","name":"token-radar-live","scripts":{"fetch":"node fetch.mjs","serve":"python3 -m http.server --directory out 8000"},"type":"module","version":"0.1.0"}
